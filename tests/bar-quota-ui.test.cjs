@@ -317,7 +317,7 @@ test("the overview ring heatmap colors only the arc and keeps error precedence",
 });
 
 test("text pill quota labels follow the Quota labels setting", () => {
-    const scope = makeScope({barTextLabels: "full", compactPill: false, barShowProviderLogos: true,
+    const scope = makeScope({barTextLabels: "full", barTextStacked: false, compactPill: false, barShowProviderLogos: true,
         quotaShortLabel: bucket => bucket.label, balanceOnlyBucket: () => false});
     for (const name of ["barTextLabelKind", "barWindowDay", "textQuotaLabel", "textQuotaParts", "bucketBarValue", "topBarSegments"])
         scope[name] = bindQmlFunction(name, scope);
@@ -326,7 +326,7 @@ test("text pill quota labels follow the Quota labels setting", () => {
     week.allowance.resetAt = resetIn(4.5);
     const fable = bucket("scoped", "Fable · weekly", 10080, "weekly", 60);
     fable.allowance.resetAt = resetIn(4.5);
-    const texts = () => scope.textQuotaParts([week, fable]);
+    const texts = () => scope.textQuotaParts([week, fable]).map(part => part.text);
 
     assert.equal(scope.barTextLabelKind("bogus"), "full");
     assert.deepEqual(texts(), ["Weekly 84%", "Fable · weekly 60%"]);
@@ -343,4 +343,30 @@ test("text pill quota labels follow the Quota labels setting", () => {
     scope.weakestProviderQuota = () => fable;
     scope.visibleProviders = () => [{id: "claude", name: "Claude"}];
     assert.equal(scope.topBarSegments()[0].text, "84% · 60%");
+});
+
+test("Stack quotas gives each quota a row at one size across providers", () => {
+    const scope = makeScope({barTextLabels: "none", barTextStacked: false, compactPill: false, barShowProviderLogos: true,
+        quotaShortLabel: bucket => bucket.label, balanceOnlyBucket: () => false});
+    for (const name of ["barTextLabelKind", "barWindowDay", "textQuotaLabel", "textQuotaParts", "bucketBarValue", "topBarSegments"])
+        scope[name] = bindQmlFunction(name, scope);
+    const week = bucket("weekly", "Weekly", 10080, "weekly", 84, {});
+    const fable = bucket("scoped", "Fable · weekly", 10080, "weekly", 60);
+    scope.weakestProviderQuota = () => fable;
+    scope.visibleProviders = () => [{id: "claude", name: "Claude"}];
+    scope.providerTopBarBuckets = () => [week, fable];
+
+    assert.deepEqual(scope.topBarSegments()[0].rows, [], "joined on one line by default");
+    scope.barTextStacked = true;
+    assert.deepEqual(scope.topBarSegments()[0].rows.map(row => row.text), ["84%", "60%"]);
+    assert.equal(scope.topBarSegments()[0].stackRows, 2);
+    scope.providerTopBarBuckets = () => [week];
+    assert.deepEqual(scope.topBarSegments()[0].rows, [], "a single quota keeps the normal line");
+
+    scope.visibleProviders = () => [{id: "codex", name: "Codex"}, {id: "claude", name: "Claude"}];
+    scope.providerTopBarBuckets = provider => provider.id === "codex" ? [week] : [week, fable];
+    const segments = scope.topBarSegments();
+    assert.deepEqual(segments.map(segment => segment.rows.length), [1, 2]);
+    assert.deepEqual(segments.map(segment => segment.stackRows), [2, 2],
+        "a one-quota provider shares the stacked size when another provider stacks");
 });

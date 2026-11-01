@@ -37,6 +37,7 @@ PluginComponent {
     property bool includeCachedTokens: false
     property bool compactPill: false
     property string barTextLabels: "full"
+    property bool barTextStacked: false
     property bool showUsed: false
     property bool barQuotaBars: false
     property int barQuotaBarWidth: 40
@@ -187,6 +188,7 @@ PluginComponent {
         includeCachedTokens = pluginService.loadPluginData(pluginId, "includeCachedTokens", false) === true
         compactPill = pluginService.loadPluginData(pluginId, "compactPill", false) === true
         barTextLabels = barTextLabelKind(pluginService.loadPluginData(pluginId, "barTextLabels", "full"))
+        barTextStacked = pluginService.loadPluginData(pluginId, "barTextStacked", false) === true
         showUsed = pluginService.loadPluginData(pluginId, "showUsed", false) === true
         barQuotaBars = pluginService.loadPluginData(pluginId, "barQuotaBars", false) === true
         barQuotaBarWidth = Math.max(16, Math.min(120, Math.round(Number(pluginService.loadPluginData(pluginId, "barQuotaBarWidth", 40)) || 40)))
@@ -2047,9 +2049,17 @@ PluginComponent {
         for (var i = 0; i < buckets.length; i++) {
             var label = textQuotaLabel(buckets[i], tags[i])
             var value = bucketBarValue(buckets[i])
-            parts.push(label ? label + " " + value : value)
+            parts.push({ text: label ? label + " " + value : value, allowance: buckets[i].allowance })
         }
         return parts
+    }
+
+    function barTextRowPitch(rows) {
+        return Math.max(6, Math.floor((widgetThickness - 2) / Math.max(1, rows)))
+    }
+
+    function barTextStackSize(rows) {
+        return Math.max(7, Math.min(Theme.fontSizeMedium, Math.round(barTextRowPitch(rows) * 0.8)))
     }
 
     function topBarSegments() {
@@ -2070,18 +2080,24 @@ PluginComponent {
                     segments.push({
                         provider: list[i],
                         allowance: compactWeakest.allowance,
-                        text: (barShowProviderLogos ? "" : list[i].name + " ") + textQuotaParts([compactWeakest])[0]
+                        text: (barShowProviderLogos ? "" : list[i].name + " ") + textQuotaParts([compactWeakest])[0].text,
+                        rows: [],
+                        stackRows: 0
                     })
                 }
             }
             return segments
         }
 
+        var stackRows = 0
         for (var k = 0; k < list.length; k++) {
-            var text = textQuotaParts(providerTopBarBuckets(list[k])).join(" · ")
-            if (text === "") continue
-            // Color the segment by its most constrained shown quota.
             var shown = providerTopBarBuckets(list[k])
+            var parts = textQuotaParts(shown)
+            if (parts.length === 0) continue
+            stackRows = Math.max(stackRows, parts.length)
+            var texts = []
+            for (var p = 0; p < parts.length; p++) texts.push(parts[p].text)
+            // Color the segment by its most constrained shown quota.
             var weakestShown = null
             for (var m = 0; m < shown.length; m++) {
                 if (!knownAllowance(shown[m].allowance)) continue
@@ -2091,8 +2107,14 @@ PluginComponent {
             segments.push({
                 provider: list[k],
                 allowance: weakestShown ? weakestShown.allowance : null,
-                text: (barShowProviderLogos ? "" : list[k].name + " ") + text
+                text: (barShowProviderLogos ? "" : list[k].name + " ") + texts.join(" · "),
+                rows: parts
             })
+        }
+        // Once any provider stacks, every provider uses the same row size.
+        for (var s = 0; s < segments.length; s++) {
+            segments[s].stackRows = barTextStacked && stackRows > 1 ? stackRows : 0
+            if (!segments[s].stackRows) segments[s].rows = []
         }
         return segments
     }
@@ -2634,6 +2656,7 @@ PluginComponent {
 
                 Row {
                     spacing: Theme.spacingXS
+                    anchors.verticalCenter: parent.verticalCenter
 
                     ProviderLogo {
                         provider: modelData.provider
@@ -2644,11 +2667,41 @@ PluginComponent {
 
                     StyledText {
                         text: modelData.text
+                        visible: modelData.rows.length === 0
                         font.pixelSize: Theme.fontSizeMedium
                         color: root.barSegmentColor(modelData.allowance)
                         anchors.verticalCenter: parent.verticalCenter
                         elide: Text.ElideRight
                         maximumLineCount: 1
+                    }
+
+                    StyledText {
+                        text: modelData.provider.name
+                        visible: modelData.rows.length > 0 && !root.barShowProviderLogos
+                        font.pixelSize: Theme.fontSizeMedium
+                        color: Theme.surfaceText
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+
+                    // Stacked text: one small line per quota.
+                    Column {
+                        id: textStack
+                        property int rowCount: modelData.stackRows
+                        visible: modelData.rows.length > 0
+                        anchors.verticalCenter: parent.verticalCenter
+
+                        Repeater {
+                            model: modelData.rows
+
+                            StyledText {
+                                text: modelData.text
+                                height: root.barTextRowPitch(textStack.rowCount)
+                                verticalAlignment: Text.AlignVCenter
+                                wrapMode: Text.NoWrap
+                                font.pixelSize: root.barTextStackSize(textStack.rowCount)
+                                color: root.barSegmentColor(modelData.allowance)
+                            }
+                        }
                     }
                 }
             }

@@ -143,7 +143,7 @@ assert 'root.historyEventDetail(modelData)' in component_text
 # Both bar layouts omit the mode suffix; dropdown labels retain it by default.
 assert 'includeMode === false ? "%"' in component_text
 assert 'var value = bucketBarValue(buckets[i])' in component_text
-assert 'textQuotaParts([compactWeakest])[0]' in component_text
+assert 'textQuotaParts([compactWeakest])[0].text' in component_text
 assert 'return allowanceLabel(bucket.allowance, false)' in component_text
 assert 'return allowanceLabel(bucket.allowance)' in component_text
 assert 'component TokenHistoryRow: StyledRect' in component_text

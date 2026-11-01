@@ -391,6 +391,8 @@ PluginSettings {
         }
 
         ToggleSetting {
+            id: compactPillToggle
+
             settingKey: "compactPill"
             label: "Compact pill"
             description: "One quota per provider: the most constrained"
@@ -409,6 +411,14 @@ PluginSettings {
                 description: "Name shown before each percentage"
                 options: root.barTextLabelOptions
                 defaultValue: "full"
+            }
+
+            ToggleSetting {
+                settingKey: "barTextStacked"
+                label: "Stack quotas"
+                description: "One small line per quota instead of one line per provider"
+                defaultValue: false
+                visible: !compactPillToggle.value
             }
         }
 

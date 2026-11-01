@@ -66,6 +66,11 @@ while bars are on.
   bars), the day of the weekly window (`3/7 84%`; model-scoped quotas keep
   their tag, and the tag stands in until the window's timing is known), or
   none.
+- **Stack quotas** (off by default, hidden with Compact pill) puts each of a
+  provider's quotas on its own small line, sized to fit the bar, instead of
+  joining them with `·`. Every provider then uses the same small text, so a
+  provider with one quota shows one small line; with no provider stacking, the
+  pill keeps its normal line.
 
 **Quota bar options** appear while quota bars are on. Their saved values are
 kept while bars are off.

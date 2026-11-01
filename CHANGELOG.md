@@ -7,6 +7,7 @@ as its GitHub release notes.
 ## [Unreleased]
 
 - Added a **Quota labels** setting for the text pill under the new **Text options**: it shortens `Weekly` to `w` (or the model initial), shows the day of the weekly window like `3/7`, or drops the name.
+- Added a **Stack quotas** text option that puts each of a provider's quotas on its own small line, at one text size for every provider.
 
 ## [2.0.0] - 2026-10-31
 

@@ -82,6 +82,10 @@
       "enum": ["full", "short", "day", "none"],
       "default": "full"
     },
+    "barTextStacked": {
+      "type": "boolean",
+      "default": false
+    },
     "barQuotaBars": {
       "type": "boolean",
       "default": false
