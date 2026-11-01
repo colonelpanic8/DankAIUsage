@@ -315,3 +315,32 @@ test("the overview ring heatmap colors only the arc and keeps error precedence",
     assert.match(ring[1], /strokeColor: Theme\.withAlpha\(Theme\.surfaceVariantText, 0\.18\)/,
         "the full-circle track keeps its muted color");
 });
+
+test("text pill quota labels follow the Quota labels setting", () => {
+    const scope = makeScope({barTextLabels: "full", compactPill: false, barShowProviderLogos: true,
+        quotaShortLabel: bucket => bucket.label, balanceOnlyBucket: () => false});
+    for (const name of ["barTextLabelKind", "barWindowDay", "textQuotaLabel", "textQuotaParts", "bucketBarValue", "topBarSegments"])
+        scope[name] = bindQmlFunction(name, scope);
+    const resetIn = days => new Date(now + days * 86400000).toISOString();
+    const week = bucket("weekly", "Weekly", 10080, "weekly", 84, {});
+    week.allowance.resetAt = resetIn(4.5);
+    const fable = bucket("scoped", "Fable · weekly", 10080, "weekly", 60);
+    fable.allowance.resetAt = resetIn(4.5);
+    const texts = () => scope.textQuotaParts([week, fable]);
+
+    assert.equal(scope.barTextLabelKind("bogus"), "full");
+    assert.deepEqual(texts(), ["Weekly 84%", "Fable · weekly 60%"]);
+    scope.barTextLabels = "short";
+    assert.deepEqual(texts(), ["w 84%", "f 60%"]);
+    scope.barTextLabels = "day";
+    assert.deepEqual(texts(), ["3/7 84%", "f 60%"], "day 3 of 7 with 4.5 days left; scoped quotas keep their tag");
+    week.allowance.resetAt = undefined;
+    assert.deepEqual(texts(), ["w 84%", "f 60%"], "unknown timing falls back to the tag");
+    scope.barTextLabels = "none";
+    assert.deepEqual(texts(), ["84%", "60%"]);
+
+    scope.providerTopBarBuckets = () => [week, fable];
+    scope.weakestProviderQuota = () => fable;
+    scope.visibleProviders = () => [{id: "claude", name: "Claude"}];
+    assert.equal(scope.topBarSegments()[0].text, "84% · 60%");
+});

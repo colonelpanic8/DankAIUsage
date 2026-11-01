@@ -77,6 +77,11 @@
       "type": "boolean",
       "default": false
     },
+    "barTextLabels": {
+      "type": "string",
+      "enum": ["full", "short", "day", "none"],
+      "default": "full"
+    },
     "barQuotaBars": {
       "type": "boolean",
       "default": false

@@ -36,6 +36,7 @@ PluginComponent {
     property bool barShowCodexCredits: false
     property bool includeCachedTokens: false
     property bool compactPill: false
+    property string barTextLabels: "full"
     property bool showUsed: false
     property bool barQuotaBars: false
     property int barQuotaBarWidth: 40
@@ -185,6 +186,7 @@ PluginComponent {
         barShowCodexCredits = pluginService.loadPluginData(pluginId, "barShowCodexCredits", false) === true
         includeCachedTokens = pluginService.loadPluginData(pluginId, "includeCachedTokens", false) === true
         compactPill = pluginService.loadPluginData(pluginId, "compactPill", false) === true
+        barTextLabels = barTextLabelKind(pluginService.loadPluginData(pluginId, "barTextLabels", "full"))
         showUsed = pluginService.loadPluginData(pluginId, "showUsed", false) === true
         barQuotaBars = pluginService.loadPluginData(pluginId, "barQuotaBars", false) === true
         barQuotaBarWidth = Math.max(16, Math.min(120, Math.round(Number(pluginService.loadPluginData(pluginId, "barQuotaBarWidth", 40)) || 40)))
@@ -2015,13 +2017,39 @@ PluginComponent {
         return out
     }
 
-    function providerTopBarText(provider) {
-        var buckets = providerTopBarBuckets(provider)
+    function barTextLabelKind(value) {
+        return ["full", "short", "day", "none"].indexOf(value) >= 0 ? value : "full"
+    }
+
+    // Day of a multi-day window, such as 3/7, or "" when its timing is unknown.
+    function barWindowDay(allowance) {
+        var timing = resetTiming(allowance, resetClock)
+        if (!timing || !timing.progressKnown) return ""
+        var dayMs = 86400000
+        var total = Math.round(timing.durationMs / dayMs)
+        if (total < 2) return ""
+        var day = Math.min(total, Math.floor((timing.durationMs - timing.remainingMs) / dayMs) + 1)
+        return day + "/" + total
+    }
+
+    function textQuotaLabel(bucket, tag) {
+        if (barTextLabels === "none") return ""
+        if (barTextLabels === "full") return quotaShortLabel(bucket)
+        if (barTextLabels === "day" && bucket.kind !== "credits" && bucket.kind !== "scoped")
+            return barWindowDay(bucket.allowance) || tag
+        return tag
+    }
+
+    // Text pill entries, labelled per the Quota labels setting.
+    function textQuotaParts(buckets) {
+        var tags = barQuotaTags(buckets)
         var parts = []
         for (var i = 0; i < buckets.length; i++) {
-            parts.push(quotaShortLabel(buckets[i]) + " " + bucketBarValue(buckets[i]))
+            var label = textQuotaLabel(buckets[i], tags[i])
+            var value = bucketBarValue(buckets[i])
+            parts.push(label ? label + " " + value : value)
         }
-        return parts.join(" · ")
+        return parts
     }
 
     function topBarSegments() {
@@ -2042,7 +2070,7 @@ PluginComponent {
                     segments.push({
                         provider: list[i],
                         allowance: compactWeakest.allowance,
-                        text: (barShowProviderLogos ? "" : list[i].name + " ") + quotaShortLabel(compactWeakest) + " " + bucketBarValue(compactWeakest)
+                        text: (barShowProviderLogos ? "" : list[i].name + " ") + textQuotaParts([compactWeakest])[0]
                     })
                 }
             }
@@ -2050,7 +2078,7 @@ PluginComponent {
         }
 
         for (var k = 0; k < list.length; k++) {
-            var text = providerTopBarText(list[k])
+            var text = textQuotaParts(providerTopBarBuckets(list[k])).join(" · ")
             if (text === "") continue
             // Color the segment by its most constrained shown quota.
             var shown = providerTopBarBuckets(list[k])

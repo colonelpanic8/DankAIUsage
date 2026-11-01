@@ -58,6 +58,15 @@ constrained quota.
   keeps one selected quota per enabled provider rather than hiding a provider.
   Its saved value is kept while quota bars are on.
 
+**Text options** appear while quota bars are off. Their saved values are kept
+while bars are on.
+
+- **Quota labels:** the name before each percentage. Full (`Weekly`,
+  `Fable · weekly`), short (the same `w` and model-initial tags as the quota
+  bars), the day of the weekly window (`3/7 84%`; model-scoped quotas keep
+  their tag, and the tag stands in until the window's timing is known), or
+  none.
+
 **Quota bar options** appear while quota bars are on. Their saved values are
 kept while bars are off.
 

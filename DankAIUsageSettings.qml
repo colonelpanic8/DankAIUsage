@@ -16,6 +16,13 @@ PluginSettings {
         { label: "Percent", value: "percent" }
     ]
 
+    readonly property var barTextLabelOptions: [
+        { label: "Full (Weekly)", value: "full" },
+        { label: "Short (w / model initial)", value: "short" },
+        { label: "Day of week (3/7)", value: "day" },
+        { label: "None", value: "none" }
+    ]
+
     readonly property var heatmapPaletteOptions: [
         { label: "Green to red", value: "fixed" },
         { label: "Theme colors", value: "theme" }
@@ -389,6 +396,20 @@ PluginSettings {
             description: "One quota per provider: the most constrained"
             defaultValue: false
             visible: !barQuotaBarsToggle.value
+        }
+
+        SettingsGroup {
+            title: "Text options"
+            nested: true
+            visible: !barQuotaBarsToggle.value
+
+            SelectionSetting {
+                settingKey: "barTextLabels"
+                label: "Quota labels"
+                description: "Name shown before each percentage"
+                options: root.barTextLabelOptions
+                defaultValue: "full"
+            }
         }
 
         SettingsGroup {
