@@ -304,7 +304,7 @@ for expected in (
     'visible: modelData.id === "codex" && root.resetControlsVisible(modelData)',
     'visible: modelData.id === "claude" && root.claudeResetControlsVisible(modelData)',
     'visible: root.advancedDropdown && root.hasSpendableClaudeReset(modelData)',
-    'visible: (root.advancedDropdown && (root.showCodex || root.showClaude))',
+    'visible: (root.advancedDropdown && (root.showCodex || root.showClaude || root.showGemini))',
 ):
     assert expected in component, f"missing dropdown visibility contract: {expected}"
 assert component.count("visible: root.advancedDropdown\n") >= 3

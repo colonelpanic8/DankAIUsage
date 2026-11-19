@@ -180,7 +180,7 @@ func validateDiagnosticEvent(event diagnosticEvent, now time.Time) (diagnosticEv
 	if err != nil || at.Before(now.Add(-diagnosticRetention)) || at.After(now.Add(time.Minute)) {
 		return diagnosticEvent{}, false
 	}
-	if event.Provider != "codex" && event.Provider != "claude" && event.Provider != "helper" {
+	if event.Provider != "codex" && event.Provider != "claude" && event.Provider != "gemini" && event.Provider != "helper" {
 		return diagnosticEvent{}, false
 	}
 	if _, ok := diagnosticCategories[event.Category]; !ok {
@@ -301,6 +301,22 @@ func classifyDiagnosticError(provider string, err error) (string, int) {
 			}
 		}
 	}
+	if provider == "gemini" {
+		switch {
+		case strings.Contains(message, "auth failed (HTTP 401)"):
+			return "authentication", 401
+		case strings.Contains(message, "auth failed (HTTP 403)"):
+			return "authentication", 403
+		case strings.Contains(message, "credentials"), strings.Contains(message, "OAuth token"):
+			return "authentication", 0
+		case strings.Contains(message, "rate limited (HTTP 429)"):
+			return "rate_limited", 429
+		case strings.Contains(message, "unreachable"):
+			return "network", 0
+		case strings.Contains(message, "unsupported response"), strings.Contains(message, "no Gemini quota"):
+			return "invalid_response", 0
+		}
+	}
 	if strings.Contains(message, "response could not be read") {
 		return "invalid_response", 0
 	}
@@ -334,7 +350,7 @@ func renderDiagnostics(path string, now time.Time) (string, error) {
 	var out strings.Builder
 	out.WriteString(header + "\nRecent events:\n")
 	for _, event := range store.Events {
-		provider := map[string]string{"codex": "Codex", "claude": "Claude", "helper": "Helper"}[event.Provider]
+		provider := map[string]string{"codex": "Codex", "claude": "Claude", "gemini": "Gemini", "helper": "Helper"}[event.Provider]
 		fmt.Fprintf(&out, "%s — %s: %s", event.Time, provider, diagnosticCategories[event.Category])
 		if event.HTTPStatus != 0 {
 			fmt.Fprintf(&out, " (HTTP %d)", event.HTTPStatus)

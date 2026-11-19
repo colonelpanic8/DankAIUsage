@@ -1,7 +1,7 @@
 {
   "id": "dankAIUsage",
   "name": "AI Usage",
-  "description": "Monitor Codex and Claude quotas, credits, and token history",
+  "description": "Monitor Codex, Claude, and Gemini quotas, credits, and token history",
     "version": "2.0.0",
   "author": "alcxyz",
   "icon": "monitoring",
@@ -37,6 +37,10 @@
       "default": true
     },
     "showClaude": {
+      "type": "boolean",
+      "default": true
+    },
+    "showGemini": {
       "type": "boolean",
       "default": true
     },

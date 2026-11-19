@@ -302,6 +302,13 @@ PluginSettings {
             defaultValue: true
         }
 
+        ToggleSetting {
+            settingKey: "showGemini"
+            label: "Show Gemini"
+            description: "Gemini limits from the Antigravity CLI (agy) sign-in"
+            defaultValue: true
+        }
+
         SelectionSetting {
             settingKey: "providerOrder"
             label: "Provider order"

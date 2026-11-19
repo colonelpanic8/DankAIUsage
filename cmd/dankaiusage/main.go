@@ -272,12 +272,14 @@ func collect(opts options) Summary {
 		Capabilities: map[string]bool{
 			"codexCli":  hasCommand("codex"),
 			"claudeCli": hasCommand("claude"),
+			"agyCli":    hasCommand("agy"),
 		},
 	}
 
 	codex := collectCodex(now, opts)
 	claude := collectClaude(now, opts)
-	out.Providers = []ProviderUsage{codex, claude}
+	gemini := collectGemini(now, opts)
+	out.Providers = []ProviderUsage{codex, claude, gemini}
 	out.Tracking = refreshTokenTracking(tokenTrackingPath(), now)
 
 	for _, provider := range out.Providers {

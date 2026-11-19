@@ -8,6 +8,7 @@ as its GitHub release notes.
 
 - Added a **Quota labels** setting for the text pill under the new **Text options**: it shortens `Weekly` to `w` (or the model initial), shows the day of the weekly window like `3/7`, or drops the name.
 - Added a **Stack quotas** text option that puts each of a provider's quotas on its own small line, at one text size for every provider.
+- Added **Gemini** as a third provider: its weekly and 5-hour limits come from the Antigravity CLI (`agy`) sign-in, with a **Show Gemini** switch in settings.
 
 ## [2.0.0] - 2026-10-31
 
